@@ -12,7 +12,7 @@ public class GameState
     public Player Winner { get; private set; }
     public Dictionary<Position, List<Position>> LegalMoves { get; private set; }
 
-    public GameState(Player playerMoveFirst)
+    public GameState()
     {
         Board = new Player[Rows, Cols];
         Board[3, 3] = Player.White;
@@ -26,7 +26,7 @@ public class GameState
             {Player.White, 2 }
         };
 
-        CurrentPlayer = playerMoveFirst;
+        CurrentPlayer = Player.Black;
         LegalMoves = FindLegalMoves(CurrentPlayer);
     }
 

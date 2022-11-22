@@ -61,7 +61,7 @@ public class GameManager : MonoBehaviour
         }
         discs = new Disc[8, 8];
 
-        gameState = new GameState(Player.Black);
+        gameState = new GameState();
         AddStartDiscs();
         ShowLegalMove();
         uiManager.SetPlayerText(gameState.CurrentPlayer);
