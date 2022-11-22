@@ -21,7 +21,7 @@ public class GameManager : MonoBehaviour
     private UIManager uiManager;
 
     private Dictionary<Player, Disc> discPrefabs = new Dictionary<Player, Disc>();
-    private GameState gameState = new GameState();
+    private GameState gameState;
     private Disc[,] discs = new Disc[8, 8];
     private List<GameObject> highlights = new List<GameObject>();
 
@@ -30,9 +30,7 @@ public class GameManager : MonoBehaviour
         discPrefabs[Player.Black] = discBlackUp;
         discPrefabs[Player.White] = discWhiteUp;
 
-        AddStartDiscs();
-        ShowLegalMove();
-        uiManager.SetPlayerText(gameState.CurrentPlayer);
+        StartGame();
     }
 
     private void Update()
@@ -53,6 +51,20 @@ public class GameManager : MonoBehaviour
                 OnBoardClicked(boardPos);
             }
         }
+    }
+
+    public void StartGame()
+    {
+        foreach (var disc in discs)
+        {
+            if (disc != null) Destroy(disc.gameObject);
+        }
+        discs = new Disc[8, 8];
+
+        gameState = new GameState(Player.Black);
+        AddStartDiscs();
+        ShowLegalMove();
+        uiManager.SetPlayerText(gameState.CurrentPlayer);
     }
 
     private void ShowLegalMove()
@@ -195,8 +207,9 @@ public class GameManager : MonoBehaviour
     private IEnumerator RestartGame()
     {
         yield return uiManager.HideEndScreen();
-        Scene activeScene = SceneManager.GetActiveScene();
-        SceneManager.LoadScene(activeScene.name);
+        //Scene activeScene = SceneManager.GetActiveScene();
+        //SceneManager.LoadScene(activeScene.name);
+        StartGame();
     }
 
     public void OnPlayAgainClicked()
