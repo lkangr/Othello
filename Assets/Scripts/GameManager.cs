@@ -25,8 +25,10 @@ public class GameManager : MonoBehaviour
     private Disc[,] discs = new Disc[8, 8];
     private List<GameObject> highlights = new List<GameObject>();
 
-    private bool vsAI;
-    private Player AIPlayer;
+    public bool inGame = false;
+
+    public Mode mode = Mode.PvE;
+    public Player AIPlayer = Player.White;
 
     private bool playerTurn;
     private bool isAIMoveAvailable = false;
@@ -37,7 +39,7 @@ public class GameManager : MonoBehaviour
         discPrefabs[Player.Black] = discBlackUp;
         discPrefabs[Player.White] = discWhiteUp;
 
-        StartGame();
+        // StartGame();
     }
 
     private void Update()
@@ -47,29 +49,31 @@ public class GameManager : MonoBehaviour
             Application.Quit();
         }
 
-        if (playerTurn && Input.GetMouseButtonDown(0))
+        if (inGame)
         {
-            Ray ray = cam.ScreenPointToRay(Input.mousePosition);
-
-            if (Physics.Raycast(ray, out RaycastHit hitInfo))
+            if (playerTurn && Input.GetMouseButtonDown(0))
             {
-                Vector3 impact = hitInfo.point;
-                Position boardPos = SceneToBoardPos(impact);
-                OnBoardClicked(boardPos);
+                Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+
+                if (Physics.Raycast(ray, out RaycastHit hitInfo))
+                {
+                    Vector3 impact = hitInfo.point;
+                    Position boardPos = SceneToBoardPos(impact);
+                    OnBoardClicked(boardPos);
+                }
             }
-        }
-        
-        if (!playerTurn && isAIMoveAvailable)
-        {
-            isAIMoveAvailable = false;
-            StartCoroutine(OnMoveMade(AIMoveInfo));
+
+            if (!playerTurn && isAIMoveAvailable)
+            {
+                isAIMoveAvailable = false;
+                StartCoroutine(OnMoveMade(AIMoveInfo));
+            }
         }
     }
 
     public void StartGame()
     {
-        vsAI = true;
-        AIPlayer = Player.White;
+        isAIMoveAvailable = false;
 
         foreach (var disc in discs)
         {
@@ -79,16 +83,11 @@ public class GameManager : MonoBehaviour
 
         gameState = new GameState();
         AddStartDiscs();
-        if (vsAI && gameState.CurrentPlayer == AIPlayer)
-        {
-            playerTurn = false;
-        }
-        else
-        {
-            playerTurn = true;
-        }
 
-        if (playerTurn) ShowLegalMove();
+        inGame = true;
+
+        CheckNextTurn();
+
         uiManager.SetPlayerText(gameState.CurrentPlayer);
     }
 
@@ -122,14 +121,13 @@ public class GameManager : MonoBehaviour
         yield return ShowMove(moveInfo);
         yield return ShowTurnOutcome(moveInfo);
 
-        if (vsAI && gameState.CurrentPlayer == AIPlayer)
-        {
-            playerTurn = false;
-        }
-        else
-        {
-            playerTurn = true;
-        }
+        CheckNextTurn();
+    }
+
+    private void CheckNextTurn()
+    {
+        if (mode == Mode.PvE && gameState.CurrentPlayer == AIPlayer) playerTurn = false;
+        else playerTurn = true;
 
         if (playerTurn) ShowLegalMove();
         else
@@ -197,6 +195,7 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator ShowGameOver(Player winner)
     {
+        inGame = false;
         uiManager.SetTopText("Neither Player Can Move");
         yield return uiManager.AnimateTopText();
 
@@ -240,7 +239,7 @@ public class GameManager : MonoBehaviour
                 black++;
                 uiManager.SetBlackScoreText(black);
             }
-            else //if (player == Player.White)
+            else
             {
                 white++;
                 uiManager.SetWhiteScoreText(white);
@@ -254,8 +253,6 @@ public class GameManager : MonoBehaviour
     private IEnumerator RestartGame()
     {
         yield return uiManager.HideEndScreen();
-        //Scene activeScene = SceneManager.GetActiveScene();
-        //SceneManager.LoadScene(activeScene.name);
         StartGame();
     }
 

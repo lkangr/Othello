@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -24,15 +23,185 @@ public class UIManager : MonoBehaviour
     [SerializeField]
     private RectTransform playAgainButton;
 
+    [SerializeField]
+    private RectTransform homeButton;
+
+    [Header("-----------")]
+    public GameManager gameManager;
+
+    [Header("MainView")]
+    public GameObject mainView;
+    public RectTransform gray;
+    public RectTransform label;
+    public RectTransform mainGroup;
+    public RectTransform offlineGroup;
+    public RectTransform offlinePvEDifficultGroup;
+    public RectTransform offlinePvEGroup;
+
+    [Header("InGameView")]
+    public GameObject inGameView;
+    public RectTransform pausePopup;
+
+    private void Start()
+    {
+        StartCoroutine(ShowMainView());
+    }
+
+    #region mainview
+    public IEnumerator ShowMainView()
+    {
+        inGameView.SetActive(false);
+        mainView.SetActive(true);
+        gray.LeanAlpha(0, 0);
+        label.localScale = Vector3.zero;
+        mainGroup.localScale = Vector3.zero;
+        offlineGroup.localScale = Vector3.zero;
+        offlinePvEDifficultGroup.localScale = Vector3.zero;
+        offlinePvEGroup.localScale = Vector3.zero;
+
+        yield return new WaitForSeconds(0.25f);
+
+        gray.LeanAlpha(0.3f, 0.5f);
+        yield return new WaitForSeconds(0.5f);
+
+        label.LeanScale(Vector3.one, 0.5f);
+        mainGroup.LeanScale(Vector3.one, 0.5f);
+        yield return new WaitForSeconds(0.5f);
+    }
+
+    public void ShowInGameView()
+    {
+        mainView.SetActive(false);
+        inGameView.SetActive(true);
+    }
+
+    public IEnumerator ToOfflineGroup()
+    {
+        mainGroup.LeanScale(Vector3.zero, 0.5f);
+        yield return new WaitForSeconds(0.5f);
+
+        offlineGroup.LeanScale(Vector3.one, 0.5f);
+        yield return new WaitForSeconds(0.5f);
+    }
+
+    public IEnumerator ToOfflinePvEDifficultGroup()
+    {
+        offlineGroup.LeanScale(Vector3.zero, 0.5f);
+        yield return new WaitForSeconds(0.5f);
+
+        offlinePvEDifficultGroup.LeanScale(Vector3.one, 0.5f);
+        yield return new WaitForSeconds(0.5f);
+    }
+
+    public IEnumerator BackFromOfflineGroup()
+    {
+        offlineGroup.LeanScale(Vector3.zero, 0.5f);
+        yield return new WaitForSeconds(0.5f);
+
+        mainGroup.LeanScale(Vector3.one, 0.5f);
+        yield return new WaitForSeconds(0.5f);
+    }
+
+    public IEnumerator ToOfflinePvEGroup()
+    {
+        offlinePvEDifficultGroup.LeanScale(Vector3.zero, 0.5f);
+        yield return new WaitForSeconds(0.5f);
+
+        offlinePvEGroup.LeanScale(Vector3.one, 0.5f);
+        yield return new WaitForSeconds(0.5f);
+    }
+
+    public IEnumerator BackFromOfflinePvEDifficultGroup()
+    {
+        offlinePvEDifficultGroup.LeanScale(Vector3.zero, 0.5f);
+        yield return new WaitForSeconds(0.5f);
+
+        offlineGroup.LeanScale(Vector3.one, 0.5f);
+        yield return new WaitForSeconds(0.5f);
+    }
+
+    public IEnumerator BackFromOfflinePvEGroup()
+    {
+        offlinePvEGroup.LeanScale(Vector3.zero, 0.5f);
+        yield return new WaitForSeconds(0.5f);
+
+        offlinePvEDifficultGroup.LeanScale(Vector3.one, 0.5f);
+        yield return new WaitForSeconds(0.5f);
+    }
+    #endregion
+
+    #region button mainView
+    public void OnPlayOfflineButtonClick()
+    {
+        StartCoroutine(ToOfflineGroup());
+    }
+
+    public void OnPvPButtonClick()
+    {
+        gameManager.mode = Mode.PvP;
+        ShowInGameView();
+        gameManager.StartGame();
+    }
+
+    public void OnPvEButtonClick()
+    {
+        gameManager.mode = Mode.PvE;
+        StartCoroutine(ToOfflinePvEDifficultGroup());
+    }
+
+    public void OnBackOfflineButtonClick()
+    {
+        StartCoroutine(BackFromOfflineGroup());
+    }
+
+    public void OnPvEDifficultClick(int iteration)
+    {
+        AIMonteCarlo.iteration = iteration;
+        StartCoroutine(ToOfflinePvEGroup());
+    }
+
+    public void OnBackOfflinePvEDifficultClick()
+    {
+        StartCoroutine(BackFromOfflinePvEDifficultGroup());
+    }
+
+    public void OnPvEStartClick(bool goFirst)
+    {
+        gameManager.AIPlayer = goFirst ? Player.White : Player.Black;
+        ShowInGameView();
+        gameManager.StartGame();
+    }
+
+    public void OnBackOfflinePvEClick()
+    {
+        StartCoroutine(BackFromOfflinePvEGroup());
+    }
+    #endregion
+
+    #region ingame
     public void SetPlayerText(Player currentPlayer)
     {
-        if (currentPlayer == Player.Black)
+        if (gameManager.mode == Mode.PvP)
         {
-            topText.text = "Black's Turn <sprite name=DiscBlackUp>";
+            if (currentPlayer == Player.Black)
+            {
+                topText.text = "Black's Turn <sprite name=DiscBlackUp>";
+            }
+            else if (currentPlayer == Player.White)
+            {
+                topText.text = "White's Turn <sprite name=DiscWhiteUp>";
+            }
         }
-        else if (currentPlayer == Player.White)
+        else if (gameManager.mode == Mode.PvE)
         {
-            topText.text = "White's Turn <sprite name=DiscWhiteUp>";
+            if (currentPlayer == gameManager.AIPlayer)
+            {
+                topText.text = "AI's Turn <sprite name=DiscBlackUp>";
+            }
+            else
+            {
+                topText.text = "Your Turn <sprite name=DiscBlackUp>";
+            }
         }
     }
 
@@ -115,17 +284,35 @@ public class UIManager : MonoBehaviour
 
     public void SetWinnerText(Player winner)
     {
-        switch (winner)
+        if (gameManager.mode == Mode.PvP)
         {
-            case Player.Black:
-                winnerText.text = "Black Won!";
-                break;
-            case Player.White:
-                winnerText.text = "White Won!";
-                break;
-            case Player.None:
+            switch (winner)
+            {
+                case Player.Black:
+                    winnerText.text = "Black Won!";
+                    break;
+                case Player.White:
+                    winnerText.text = "White Won!";
+                    break;
+                case Player.None:
+                    winnerText.text = "It's a Tie!";
+                    break;
+            }
+        }
+        else if (gameManager.mode == Mode.PvE)
+        {
+            if (winner == Player.None)
+            {
                 winnerText.text = "It's a Tie!";
-                break;
+            }
+            else if (winner == gameManager.AIPlayer)
+            {
+                winnerText.text = "AI Won!";
+            }
+            else
+            {
+                winnerText.text = "You Won!";
+            }
         }
     }
 
@@ -135,6 +322,7 @@ public class UIManager : MonoBehaviour
         yield return MoveScoresDown();
         yield return ScaleUp(winnerText.rectTransform);
         yield return ScaleUp(playAgainButton);
+        yield return ScaleUp(homeButton);
     }
 
     public IEnumerator HideEndScreen()
@@ -143,8 +331,63 @@ public class UIManager : MonoBehaviour
         StartCoroutine(ScaleDown(blackScoreText.rectTransform));
         StartCoroutine(ScaleDown(whiteScoreText.rectTransform));
         StartCoroutine(ScaleDown(playAgainButton));
+        StartCoroutine(ScaleDown(homeButton));
 
         yield return new WaitForSeconds(0.5f);
         yield return HideOverlay();
     }
+
+    public IEnumerator InGameToHomeView()
+    {
+        yield return HideEndScreen();
+        yield return ShowMainView();
+    }
+
+    public IEnumerator ContinueFromPause()
+    {
+        yield return ScaleUp(pausePopup);
+        gameManager.inGame = true;
+    }
+
+    public IEnumerator RestartFromPause()
+    {
+        yield return ScaleDown(pausePopup);
+        gameManager.StartGame();
+    }
+
+    public IEnumerator HomeFromPause()
+    {
+        yield return ScaleDown(pausePopup);
+        yield return ShowMainView();
+    }
+    #endregion
+
+    #region button InGameView
+    public void OnHomeButtonClick()
+    {
+        StartCoroutine(InGameToHomeView());
+    }
+
+    public void OnPauseButtonClick()
+    {
+        gameManager.inGame = false;
+        StartCoroutine(ScaleUp(pausePopup));
+    }
+
+    public void POnContinueButtonClick()
+    {
+        //gameManager.inGame = true;
+        StartCoroutine(ContinueFromPause());
+    }
+
+    public void POnRestartButtonClick()
+    {
+        StartCoroutine(RestartFromPause());
+    }
+
+    public void POnHomeButtonClick()
+    {
+        StartCoroutine(HomeFromPause());
+    }
+    #endregion
 }

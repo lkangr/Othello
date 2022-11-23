@@ -19,3 +19,8 @@ public static class PlayerExtensions
         return Player.None;
     }
 }
+
+public enum Mode
+{
+    PvP, PvE, Online
+}
