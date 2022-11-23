@@ -21,14 +21,14 @@ public class MCTSNode
 
         val = 0;
         visit = 0;
-        uct = 9999;
+        uct = float.MaxValue;
     }
 
     public void CalculationUCT()
     {
-        if (parent == null || visit == 0) uct = 9999;
+        if (parent == null || visit == 0) uct = float.MaxValue;
         else
-            uct = val + MathF.Sqrt(2) * MathF.Sqrt(MathF.Log(parent.visit) / visit);
+            uct = (float)val / visit + MathF.Sqrt(2) * MathF.Sqrt(MathF.Log(parent.visit) / visit);
     }
 
     public void CreateChildren()
@@ -45,7 +45,7 @@ public class MCTSNode
 
 public class AIMonteCarlo
 {
-    public static int iteration = 1000;
+    public static int iteration = 500;
 
     private static Random rnd = new Random();
 
@@ -106,21 +106,22 @@ public class AIMonteCarlo
             node.visit++;
             node.val += result;
             node.children.ForEach(ele => ele.CalculationUCT());
-            if (node.parent.parent == null) return 0;
+            if (node.parent == null || node.parent.parent == null) return 0;
             return node.parent.gameState.CurrentPlayer == node.parent.parent.gameState.CurrentPlayer ? result : -result;
         }
     }
 
     private static int SimulateNode(MCTSNode node)
     {
-        while (!node.gameState.GameOver)
+        var tempState = node.gameState.Clone();
+        while (!tempState.GameOver)
         {
-            var keys = node.gameState.LegalMoves.Keys.ToList();
-            node.gameState.MakeMove(keys[rnd.Next(keys.Count)], out MoveInfo moveInfo);
+            var keys = tempState.LegalMoves.Keys.ToList();
+            tempState.MakeMove(keys[rnd.Next(keys.Count)], out MoveInfo moveInfo);
         }
 
-        if (node.gameState.Winner == Player.None) return 0;
-        else if (node.gameState.Winner == node.parent.gameState.CurrentPlayer) return 1;
+        if (tempState.Winner == Player.None) return 0;
+        else if (tempState.Winner == node.parent.gameState.CurrentPlayer) return 1;
         else return -1;
     }
 }

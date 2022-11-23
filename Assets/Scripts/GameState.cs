@@ -33,8 +33,9 @@ public class GameState
 
     public GameState Clone()
     {
-        var serialized = JsonConvert.SerializeObject(this);
-        return JsonConvert.DeserializeObject<GameState>(serialized);
+        var deserializeSettings = new JsonSerializerSettings { ObjectCreationHandling = ObjectCreationHandling.Replace };
+
+        return JsonConvert.DeserializeObject<GameState>(JsonConvert.SerializeObject(this), deserializeSettings);
     }
 
     public bool MakeMove(Position pos, out MoveInfo moveInfo)

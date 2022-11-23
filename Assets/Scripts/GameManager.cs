@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
+using System.Threading;
 
 public class GameManager : MonoBehaviour
 {
@@ -25,6 +25,13 @@ public class GameManager : MonoBehaviour
     private Disc[,] discs = new Disc[8, 8];
     private List<GameObject> highlights = new List<GameObject>();
 
+    private bool vsAI;
+    private Player AIPlayer;
+
+    private bool playerTurn;
+    private bool isAIMoveAvailable = false;
+    private MoveInfo AIMoveInfo;
+
     private void Start()
     {
         discPrefabs[Player.Black] = discBlackUp;
@@ -40,7 +47,7 @@ public class GameManager : MonoBehaviour
             Application.Quit();
         }
 
-        if (Input.GetMouseButtonDown(0))
+        if (playerTurn && Input.GetMouseButtonDown(0))
         {
             Ray ray = cam.ScreenPointToRay(Input.mousePosition);
 
@@ -51,10 +58,19 @@ public class GameManager : MonoBehaviour
                 OnBoardClicked(boardPos);
             }
         }
+        
+        if (!playerTurn && isAIMoveAvailable)
+        {
+            isAIMoveAvailable = false;
+            StartCoroutine(OnMoveMade(AIMoveInfo));
+        }
     }
 
     public void StartGame()
     {
+        vsAI = true;
+        AIPlayer = Player.White;
+
         foreach (var disc in discs)
         {
             if (disc != null) Destroy(disc.gameObject);
@@ -63,7 +79,16 @@ public class GameManager : MonoBehaviour
 
         gameState = new GameState();
         AddStartDiscs();
-        ShowLegalMove();
+        if (vsAI && gameState.CurrentPlayer == AIPlayer)
+        {
+            playerTurn = false;
+        }
+        else
+        {
+            playerTurn = true;
+        }
+
+        if (playerTurn) ShowLegalMove();
         uiManager.SetPlayerText(gameState.CurrentPlayer);
     }
 
@@ -96,7 +121,29 @@ public class GameManager : MonoBehaviour
         HideLegalMove();
         yield return ShowMove(moveInfo);
         yield return ShowTurnOutcome(moveInfo);
-        ShowLegalMove();
+
+        if (vsAI && gameState.CurrentPlayer == AIPlayer)
+        {
+            playerTurn = false;
+        }
+        else
+        {
+            playerTurn = true;
+        }
+
+        if (playerTurn) ShowLegalMove();
+        else
+        {
+            Thread bgThread = new Thread(MakeAIMove);
+            bgThread.Start();
+        }
+    }
+
+    private void MakeAIMove()
+    {
+        gameState.MakeMove(AIMonteCarlo.CalculationNextMove(gameState), out MoveInfo moveInfo);
+        AIMoveInfo = moveInfo;
+        isAIMoveAvailable = true;
     }
 
     private Position SceneToBoardPos(Vector3 scenePos)
