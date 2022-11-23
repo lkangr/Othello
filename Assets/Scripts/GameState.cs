@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using System.Collections.Generic;
 
 public class GameState
@@ -28,6 +29,12 @@ public class GameState
 
         CurrentPlayer = Player.Black;
         LegalMoves = FindLegalMoves(CurrentPlayer);
+    }
+
+    public GameState Clone()
+    {
+        var serialized = JsonConvert.SerializeObject(this);
+        return JsonConvert.DeserializeObject<GameState>(serialized);
     }
 
     public bool MakeMove(Position pos, out MoveInfo moveInfo)
