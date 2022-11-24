@@ -29,10 +29,13 @@ public class GameManager : MonoBehaviour
 
     public Mode mode = Mode.PvE;
     public Player AIPlayer = Player.White;
+    public Player clientPlayer;
 
     private bool playerTurn;
     private bool isAIMoveAvailable = false;
     private MoveInfo AIMoveInfo;
+
+    public NetworkBehaviour client = null;
 
     private void Start()
     {
@@ -60,13 +63,25 @@ public class GameManager : MonoBehaviour
                     Vector3 impact = hitInfo.point;
                     Position boardPos = SceneToBoardPos(impact);
                     OnBoardClicked(boardPos);
+                    if (mode == Mode.Online)
+                    {
+                        client.SendInt(boardPos.GetHashCode());
+                    }
                 }
             }
 
-            if (!playerTurn && isAIMoveAvailable)
+            if (!playerTurn)
             {
-                isAIMoveAvailable = false;
-                StartCoroutine(OnMoveMade(AIMoveInfo));
+                if (mode == Mode.PvE && isAIMoveAvailable)
+                {
+                    isAIMoveAvailable = false;
+                    StartCoroutine(OnMoveMade(AIMoveInfo));
+                }
+                else if (mode == Mode.Online && client.state >= 0)
+                {
+                    gameState.MakeMove(Position.PositionFromHashCode(client.state), out MoveInfo moveInfo);
+                    StartCoroutine(OnMoveMade(moveInfo));
+                }
             }
         }
     }
@@ -126,11 +141,11 @@ public class GameManager : MonoBehaviour
 
     private void CheckNextTurn()
     {
-        if (mode == Mode.PvE && gameState.CurrentPlayer == AIPlayer) playerTurn = false;
+        if ((mode == Mode.PvE && gameState.CurrentPlayer == AIPlayer) || (mode == Mode.Online && gameState.CurrentPlayer != clientPlayer)) playerTurn = false;
         else playerTurn = true;
 
         if (playerTurn) ShowLegalMove();
-        else
+        else if (mode == Mode.PvE)
         {
             Thread bgThread = new Thread(MakeAIMove);
             bgThread.Start();
@@ -259,5 +274,24 @@ public class GameManager : MonoBehaviour
     public void OnPlayAgainClicked()
     {
         StartCoroutine(RestartGame());
+    }
+
+    public void CreatClient(bool server)
+    {
+        if (server)
+        {
+            client = gameObject.AddComponent<ServerBehaviour>();
+        }
+        else
+        {
+            Destroy(client);
+            client = gameObject.AddComponent<ClientBehaviour>();
+        }
+    }
+
+    public void DestroyClient()
+    {
+        Destroy(client);
+        client = null;
     }
 }

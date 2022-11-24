@@ -24,3 +24,12 @@ public enum Mode
 {
     PvP, PvE, Online
 }
+
+public enum OnlineState
+{
+    WAITCONNECT = -100,
+    WAIT = -90,
+    DISCONNECT = -50,
+    BLACK = -11,
+    WHITE = -12
+}

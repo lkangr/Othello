@@ -34,6 +34,7 @@ public class UIManager : MonoBehaviour
     public RectTransform gray;
     public RectTransform label;
     public RectTransform mainGroup;
+    public RectTransform onlineGroup;
     public RectTransform offlineGroup;
     public RectTransform offlinePvEDifficultGroup;
     public RectTransform offlinePvEGroup;
@@ -42,19 +43,43 @@ public class UIManager : MonoBehaviour
     public GameObject inGameView;
     public RectTransform pausePopup;
 
+    private bool waitConnect = false;
+
     private void Start()
     {
         StartCoroutine(ShowMainView());
     }
 
+    private void Update()
+    {
+        if (waitConnect)
+        {
+            if (gameManager.client.state == (int)OnlineState.BLACK)
+            {
+                waitConnect = false;
+                gameManager.clientPlayer = Player.Black;
+                gameManager.StartGame();
+            }
+            else if (gameManager.client.state == (int)OnlineState.WHITE)
+            {
+                waitConnect = false;
+                gameManager.clientPlayer = Player.White;
+                gameManager.StartGame();
+            }
+        }
+    }
+
     #region mainview
     public IEnumerator ShowMainView()
     {
+        waitConnect = false;
+
         inGameView.SetActive(false);
         mainView.SetActive(true);
         gray.LeanAlpha(0, 0);
         label.localScale = Vector3.zero;
         mainGroup.localScale = Vector3.zero;
+        onlineGroup.localScale = Vector3.zero;
         offlineGroup.localScale = Vector3.zero;
         offlinePvEDifficultGroup.localScale = Vector3.zero;
         offlinePvEGroup.localScale = Vector3.zero;
@@ -75,6 +100,23 @@ public class UIManager : MonoBehaviour
         inGameView.SetActive(true);
     }
 
+    public IEnumerator ToOnlineGroup()
+    {
+        mainGroup.LeanScale(Vector3.zero, 0.5f);
+        yield return new WaitForSeconds(0.5f);
+
+        onlineGroup.LeanScale(Vector3.one, 0.5f);
+        yield return new WaitForSeconds(0.5f);
+
+        gameManager.CreatClient(true);
+        waitConnect = true;
+        yield return new WaitForSeconds(5f);
+        if (waitConnect)
+        {
+            gameManager.CreatClient(false);
+        }
+    }
+
     public IEnumerator ToOfflineGroup()
     {
         mainGroup.LeanScale(Vector3.zero, 0.5f);
@@ -90,6 +132,17 @@ public class UIManager : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
 
         offlinePvEDifficultGroup.LeanScale(Vector3.one, 0.5f);
+        yield return new WaitForSeconds(0.5f);
+    }
+
+    public IEnumerator BackFromOnlineGroup()
+    {
+        gameManager.DestroyClient();
+        waitConnect = false;
+        onlineGroup.LeanScale(Vector3.zero, 0.5f);
+        yield return new WaitForSeconds(0.5f);
+
+        mainGroup.LeanScale(Vector3.one, 0.5f);
         yield return new WaitForSeconds(0.5f);
     }
 
@@ -136,6 +189,12 @@ public class UIManager : MonoBehaviour
         StartCoroutine(ToOfflineGroup());
     }
 
+    public void OnPlayOnlineButtonClick()
+    {
+        gameManager.mode = Mode.Online;
+        StartCoroutine(ToOnlineGroup());
+    }
+
     public void OnPvPButtonClick()
     {
         gameManager.mode = Mode.PvP;
@@ -147,6 +206,11 @@ public class UIManager : MonoBehaviour
     {
         gameManager.mode = Mode.PvE;
         StartCoroutine(ToOfflinePvEDifficultGroup());
+    }
+
+    public void OnBackOnlineButtonClick()
+    {
+        StartCoroutine(BackFromOnlineGroup());
     }
 
     public void OnBackOfflineButtonClick()

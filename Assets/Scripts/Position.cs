@@ -23,4 +23,11 @@ public class Position
     {
         return 8 * Row + Col;
     }
+
+    public static Position PositionFromHashCode(int hashCode)
+    {
+        var row = hashCode / 8;
+        var col = hashCode - 8 * row;
+        return new Position(row, col);
+    }
 }
