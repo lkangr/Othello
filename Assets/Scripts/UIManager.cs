@@ -257,6 +257,10 @@ public class UIManager : MonoBehaviour
     #region ingame
     public void SetPlayerText(Player currentPlayer)
     {
+        if (!topText.gameObject.activeSelf) {
+            topText.gameObject.SetActive(true);
+            topText.rectTransform.localScale = Vector3.one;
+        }
         string player = "", color = "";
         if (gameManager.mode == Mode.PvP)
         {
