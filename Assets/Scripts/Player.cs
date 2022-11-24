@@ -27,6 +27,7 @@ public enum Mode
 
 public enum OnlineState
 {
+    VALIDATE = -101,
     WAITCONNECT = -100,
     WAIT = -90,
     DISCONNECT = -50,

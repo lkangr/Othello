@@ -8,6 +8,8 @@ public class NetworkBehaviour : MonoBehaviour
 
     public int state;
 
+    public float timeValidate = -1;
+
     public virtual void SendInt(int message)
     {
 

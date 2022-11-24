@@ -81,6 +81,7 @@ public class GameManager : MonoBehaviour
                 {
                     gameState.MakeMove(Position.PositionFromHashCode(client.state), out MoveInfo moveInfo);
                     StartCoroutine(OnMoveMade(moveInfo));
+                    client.state = (int)OnlineState.WAIT;
                 }
             }
         }
@@ -211,6 +212,7 @@ public class GameManager : MonoBehaviour
     private IEnumerator ShowGameOver(Player winner)
     {
         inGame = false;
+        DestroyClient();
         uiManager.SetTopText("Neither Player Can Move");
         yield return uiManager.AnimateTopText();
 
@@ -280,12 +282,12 @@ public class GameManager : MonoBehaviour
     {
         if (server)
         {
-            client = gameObject.AddComponent<ServerBehaviour>();
+            client = gameObject.AddComponent<ClientBehaviour>();
         }
         else
         {
             Destroy(client);
-            client = gameObject.AddComponent<ClientBehaviour>();
+            client = gameObject.AddComponent<ServerBehaviour>();
         }
     }
 

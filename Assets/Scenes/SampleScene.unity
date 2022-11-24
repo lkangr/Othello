@@ -1281,7 +1281,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1798264886}
         m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
-        m_MethodName: POnHomeButtonClick
+        m_MethodName: DOnHomeButtonClick
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -2037,7 +2037,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -150, y: 320}
+  m_AnchoredPosition: {x: -150, y: 450}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &638899058
@@ -2966,6 +2966,7 @@ MonoBehaviour:
   inGame: 0
   mode: 1
   AIPlayer: 2
+  clientPlayer: 0
   client: {fileID: 0}
 --- !u!4 &996275398
 Transform:
@@ -6326,7 +6327,7 @@ MonoBehaviour:
   winnerText: {fileID: 476364492}
   blackOverlay: {fileID: 750096613}
   playAgainButton: {fileID: 1616660138}
-  homeButton: {fileID: 0}
+  homeButton: {fileID: 1335652971}
   gameManager: {fileID: 996275397}
   mainView: {fileID: 2011118911}
   gray: {fileID: 1012433524}
@@ -6338,6 +6339,8 @@ MonoBehaviour:
   offlinePvEGroup: {fileID: 1530416794}
   inGameView: {fileID: 2013662277}
   pausePopup: {fileID: 1111091097}
+  pauseRestartButton: {fileID: 313623165}
+  disconnectPopup: {fileID: 1735098550}
 --- !u!4 &1798264887
 Transform:
   m_ObjectHideFlags: 0
@@ -7192,7 +7195,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 150, y: 320}
+  m_AnchoredPosition: {x: 150, y: 450}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1898858310

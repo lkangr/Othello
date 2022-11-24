@@ -29,6 +29,11 @@ public class ServerBehaviour : NetworkBehaviour
     {
         m_Driver.ScheduleUpdate().Complete();
 
+        if (timeValidate >= 0 && Time.realtimeSinceStartup - timeValidate > 2)
+        {
+            state = (int)OnlineState.DISCONNECT;
+        }
+
         if (!m_Connections.IsCreated)
         {
             // Accept new connections
@@ -37,6 +42,7 @@ public class ServerBehaviour : NetworkBehaviour
             {
                 m_Connections = c;
                 Debug.Log("Accepted a connection");
+                timeValidate = Time.realtimeSinceStartup;
                 state = (int)OnlineState.BLACK;
             }
         }
@@ -51,7 +57,12 @@ public class ServerBehaviour : NetworkBehaviour
                 {
                     int number = stream.ReadInt();
                     Debug.Log("Got " + number + " from the Client");
-                    state = number;
+                    if (number == (int)OnlineState.VALIDATE)
+                    {
+                        timeValidate = Time.realtimeSinceStartup;
+                        SendInt((int)OnlineState.VALIDATE);
+                    }
+                    else state = number;
                 }
                 else if (cmd == NetworkEvent.Type.Disconnect)
                 {

@@ -42,6 +42,8 @@ public class UIManager : MonoBehaviour
     [Header("InGameView")]
     public GameObject inGameView;
     public RectTransform pausePopup;
+    public GameObject pauseRestartButton;
+    public RectTransform disconnectPopup;
 
     private bool waitConnect = false;
 
@@ -58,14 +60,24 @@ public class UIManager : MonoBehaviour
             {
                 waitConnect = false;
                 gameManager.clientPlayer = Player.Black;
+                gameManager.client.state = (int)OnlineState.WAIT;
+                ShowInGameView();
                 gameManager.StartGame();
             }
             else if (gameManager.client.state == (int)OnlineState.WHITE)
             {
                 waitConnect = false;
                 gameManager.clientPlayer = Player.White;
+                gameManager.client.state = (int)OnlineState.WAIT;
+                ShowInGameView();
                 gameManager.StartGame();
             }
+        }
+        else if(gameManager.inGame && gameManager.mode == Mode.Online && gameManager.client.state == (int)OnlineState.DISCONNECT)
+        {
+            gameManager.inGame = false;
+            gameManager.DestroyClient();
+            StartCoroutine(OnDisconnect());
         }
     }
 
@@ -245,28 +257,50 @@ public class UIManager : MonoBehaviour
     #region ingame
     public void SetPlayerText(Player currentPlayer)
     {
+        string player = "", color = "";
         if (gameManager.mode == Mode.PvP)
         {
             if (currentPlayer == Player.Black)
             {
-                topText.text = "Black's Turn <sprite name=DiscBlackUp>";
+                player = "Black's";
             }
             else if (currentPlayer == Player.White)
             {
-                topText.text = "White's Turn <sprite name=DiscWhiteUp>";
+                player = "White's";
             }
         }
         else if (gameManager.mode == Mode.PvE)
         {
             if (currentPlayer == gameManager.AIPlayer)
             {
-                topText.text = "AI's Turn <sprite name=DiscBlackUp>";
+                player = "AI's";
             }
             else
             {
-                topText.text = "Your Turn <sprite name=DiscBlackUp>";
+                player = "Your";
             }
         }
+        else if (gameManager.mode == Mode.Online)
+        {
+            if (currentPlayer == gameManager.clientPlayer)
+            {
+                player = "Your";
+            }
+            else
+            {
+                player = "Opponent";
+            }
+        }
+
+        if (currentPlayer == Player.Black)
+        {
+            color = "DiscBlackUp";
+        }
+        else if (currentPlayer == Player.White)
+        {
+            color = "DiscWhiteUp";
+        }
+        topText.text = player + " Turn <sprite name=" + color + ">";
     }
 
     public void SetSkippedText(Player skippedPlayer)
@@ -371,11 +405,26 @@ public class UIManager : MonoBehaviour
             }
             else if (winner == gameManager.AIPlayer)
             {
-                winnerText.text = "AI Won!";
+                winnerText.text = "You Lost!";
             }
             else
             {
                 winnerText.text = "You Won!";
+            }
+        }
+        else if (gameManager.mode == Mode.Online)
+        {
+            if (winner == Player.None)
+            {
+                winnerText.text = "It's a Tie!";
+            }
+            else if (winner == gameManager.clientPlayer)
+            {
+                winnerText.text = "You Won!";
+            }
+            else
+            {
+                winnerText.text = "You Lost!";
             }
         }
     }
@@ -385,7 +434,7 @@ public class UIManager : MonoBehaviour
         yield return ShowOverlay();
         yield return MoveScoresDown();
         yield return ScaleUp(winnerText.rectTransform);
-        yield return ScaleUp(playAgainButton);
+        if (gameManager.mode != Mode.Online) yield return ScaleUp(playAgainButton);
         yield return ScaleUp(homeButton);
     }
 
@@ -409,7 +458,7 @@ public class UIManager : MonoBehaviour
 
     public IEnumerator ContinueFromPause()
     {
-        yield return ScaleUp(pausePopup);
+        yield return ScaleDown(pausePopup);
         gameManager.inGame = true;
     }
 
@@ -421,7 +470,22 @@ public class UIManager : MonoBehaviour
 
     public IEnumerator HomeFromPause()
     {
+        if (gameManager.mode == Mode.Online)
+        {
+            gameManager.DestroyClient();
+        }
         yield return ScaleDown(pausePopup);
+        yield return ShowMainView();
+    }
+
+    public IEnumerator OnDisconnect()
+    {
+        yield return ScaleUp(disconnectPopup);
+    }
+
+    public IEnumerator HomeFromDisconnect()
+    {
+        yield return ScaleDown(disconnectPopup);
         yield return ShowMainView();
     }
     #endregion
@@ -435,6 +499,7 @@ public class UIManager : MonoBehaviour
     public void OnPauseButtonClick()
     {
         gameManager.inGame = false;
+        pauseRestartButton.SetActive(gameManager.mode != Mode.Online);
         StartCoroutine(ScaleUp(pausePopup));
     }
 
@@ -452,6 +517,11 @@ public class UIManager : MonoBehaviour
     public void POnHomeButtonClick()
     {
         StartCoroutine(HomeFromPause());
+    }
+
+    public void DOnHomeButtonClick()
+    {
+        StartCoroutine(HomeFromDisconnect());
     }
     #endregion
 }

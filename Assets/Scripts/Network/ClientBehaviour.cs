@@ -30,6 +30,11 @@ public class ClientBehaviour : NetworkBehaviour
     {
         m_Driver.ScheduleUpdate().Complete();
 
+        if (timeValidate >= 0 && Time.realtimeSinceStartup - timeValidate > 2)
+        {
+            state = (int)OnlineState.DISCONNECT;
+        }
+
         if (!m_Connections.IsCreated)
         {
             m_Connections = m_Driver.Connect(endpoint);
@@ -44,18 +49,20 @@ public class ClientBehaviour : NetworkBehaviour
                 {
                     Debug.Log("We are now connected to the server");
 
+                    timeValidate = Time.realtimeSinceStartup;
+                    InvokeRepeating("ValidateConnection", 1, 1);
+
                     state = (int)OnlineState.WHITE;
-                    //m_Driver.BeginSend(m_Connections, out var writter);
-                    //writter.WriteUInt(value);
-                    //m_Driver.EndSend(writter);
                 }
                 else if (cmd == NetworkEvent.Type.Data)
                 {
                     int value = stream.ReadInt();
                     Debug.Log("Got the value = " + value + " from the server");
-                    state = value;
-                    //m_Connections.Disconnect(m_Driver);
-                    //m_Connections = default(NetworkConnection);
+                    if (value == (int)OnlineState.VALIDATE)
+                    {
+                        timeValidate = Time.realtimeSinceStartup;
+                    }
+                    else state = value;
                 }
                 else if (cmd == NetworkEvent.Type.Disconnect)
                 {
@@ -77,5 +84,10 @@ public class ClientBehaviour : NetworkBehaviour
         }
         else
             Debug.LogError("No Connection");
+    }
+
+    private void ValidateConnection()
+    {
+        SendInt((int)OnlineState.VALIDATE);
     }
 }
